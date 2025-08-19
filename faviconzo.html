@@ -95,33 +95,53 @@
         //shipY is const (just above earth)
         
         let shipX = 0;
+        const shipY =  2;
         const shipRightMax = 8;
         const shipLeftMax = -6;
-        const shipY =  2;
         let shipSpeed = 7;
+
+
+        //Rect Shape of Ship Sprite
+        const shipRectX = 4;
+        const shipRectY = 8 ;
+        const shipRectWidth = 6;
+        const shipRectHeight = 2;
 
         //intialAlienX cords range of [-6,0] , intialAlienX represents alien on the left side
         //second alien will be + 7px to the right of intialAlienX
         let alienX = 0;
         const alienY = -6;
-         
+        const alienBottomMax = 14;
         const alienLeftMax = -7; 
         const alienRightMax = 8;
-        const alienBottomMax = 2;
         const alienTopMax = -6;
+
+        //Rect shape of alien sprite
+        const alienRectX = 5
+        const alienRectY = 5;
+        const alienRectWidth = 5;
+        const alienRectHeight = 3;
+
         let alienSpeedX = 4;
         let alienSpeedY = 8;
         let direction = 1;
 
         let alien_count = 0;
         const max_alien_count = 2;
-        const aliens = [];
+        let aliens = [];
 
 
         let bulletX = 0;
         let bulletY = 0;
         let bullet_count = 2;
         const bullets = []
+
+
+        //Rect for bullet sprite
+        const bulletRectX = 7;
+        const bulletRectY = 8;
+        const bulletRectWidth = 1;
+        const bulletRectHeight = 2;
 
 
         const positionsX = [-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8];
@@ -131,6 +151,13 @@
         
         function getRandomInt(max){
             return Math.floor(Math.random() * max);
+        }
+
+        //returns array contains x,y and width,height of sprite
+        function getRect(str){
+            if(str === "ship"){
+
+            }
         }
 
         function intialState(){
@@ -210,12 +237,12 @@
             
             //draw ship
             ctx.drawImage(ship,Math.round(shipX),shipY);
-
+        
             //draw alien
             for(let i = 0; i < alien_count; i++){
                 ctx.drawImage(alien,Math.round(aliens[i].x),Math.round(aliens[i].y));
             }
-            
+
             //rip it to the faviconnnn
             favicon.href = canvas.toDataURL();
             //console.log("New game Canvas Rendered!!");
@@ -273,10 +300,62 @@
                 for(let i = 0;i < alien_count; i++)
                     aliens[i].y += 1;
             }
-            
-            
-            //console.log(`dir: ${direction}\n x:${newAlienX}\n y: ${newAlienY} \n times ${direction * alienSpeedY * deltaTime}`);
         }
+
+        function getHitbox(obj, type) {
+            let offsetX, offsetY, width, height;
+
+            switch (type) {
+                case "ship":
+                    offsetX = shipRectX;
+                    offsetY = shipRectY;
+                    width = shipRectWidth;
+                    height = shipRectHeight;
+                    break;
+                case "alien":
+                    offsetX = alienRectX;
+                    offsetY = alienRectY;
+                    width = alienRectWidth;
+                    height = alienRectHeight;
+                    break;
+                case "bullet":
+                    offsetX = bulletRectX;
+                    offsetY = bulletRectY;
+                    width = bulletRectWidth;
+                    height = bulletRectHeight;
+                    break;
+                }
+                return {
+                left: obj.x + offsetX,
+                right: obj.x + offsetX + width,
+                top: obj.y + offsetY,
+                bottom: obj.y + offsetY + height,
+            };
+        }
+
+        function collision(obj1,type1,obj2,type2){
+            const rect1 = getHitbox(obj1,type1);
+            const rect2 = getHitbox(obj2,type2);
+
+            const xOverlap = rect1.right > rect2.left && rect1.left < rect2.right;
+            const yOverlap = rect1.bottom > rect2.top && rect1.top < rect2.bottom;
+
+            return xOverlap && yOverlap;
+        }
+        //when alien reaches the bottom or hits the ship
+        function gameover(){
+            // Check each alien to see if it causes a game over condition
+            for(let i = 0;i < alien_count; i++){
+                const alienObj = aliens[i];
+   
+                const hasReachedBottom = (alienObj.y + alienRectY + alienRectHeight) >= alienBottomMax;
+
+                if (hasReachedBottom || collision({x : shipX, y : shipY}, "ship", alienObj, "alien")) {
+                    return true; 
+                }
+            }
+            return false; 
+        }       
 
 
         // function shootbullets(){
@@ -298,7 +377,11 @@
             updateGame(deltaTime);
             //render canvas
             render();
-
+            if(gameover()){
+                alien_count = 0;
+                //reset();
+                console.log("gameover D:");
+            }
             window.requestAnimationFrame(gameLoop);
         }
 
