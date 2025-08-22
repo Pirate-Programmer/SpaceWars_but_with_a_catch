@@ -120,7 +120,6 @@ body {
         const favicon_height = 16;
         const favicon_width = 16; 
 
-
     </script>
     
 </head>
@@ -162,7 +161,8 @@ body {
                 setTimeout(() => {
                     intialState(); 
                     gameState = true;          
-                }, 1000); 
+                }, 1000);     
+
                 return;
             }
 
@@ -171,7 +171,7 @@ body {
         };
 
     window.addEventListener("keydown", function (event) {
-        if (event.key === " " && !triggerHit) {
+        if (event.key === " " && !triggerHit && !gameState) {
             triggerHit = true;
             startMessage.style.display = "none";
             
@@ -181,6 +181,26 @@ body {
             document.getElementById("controls").style.display = "block";
             
             countdown();
+        }
+    });
+
+
+        window.addEventListener("keydown", function (event) {
+        // Reset game when R is pressed after game over
+        if (event.key === "r" || event.key === "R") {
+            if(!gameState && triggerHit) { // Only if game is over
+                // Hide all game elements
+                document.getElementById("hud").style.display = "none";
+                document.getElementById("highscore").style.display = "none";
+                document.getElementById("controls").style.display = "none";
+                
+                // Show start message
+                document.getElementById("message").textContent = "Press SPACE to Begin";
+                document.getElementById("message").style.display = "block";
+                
+                // Reset trigger
+                triggerHit = false;
+            }
         }
     });
     </script>
@@ -216,7 +236,12 @@ body {
         let bullet = addImages();
 
     
-
+        //Scoring
+        let score = 0;
+        let wave = 1;
+        let highscore = localStorage.getItem('spacewars-highscore') || 0;
+        highscore = parseInt(highscore);
+        document.getElementById("highscore").textContent = `Highscore: ${highscore}`;
 
         //fetch the canvas element and set some defualt values
         const canvas = document.getElementById("canvas");
@@ -313,7 +338,6 @@ body {
                 loadImages(bullet,"./images/bullet.png")
             ]).then(() => {
                 //clear the canvas
-                reset();
 
                 ctx.clearRect(0,0,canvas.width,canvas.height);
                 
@@ -340,8 +364,7 @@ body {
                 favicon.href = canvas.toDataURL();
                 console.log("Intial State Rendered!!");
 
-                //intiate gameloop
-                window.requestAnimationFrame(gameLoop);   
+                window.requestAnimationFrame(gameLoop); // Change from gameLoop() to this
             });
         }
 
@@ -351,7 +374,7 @@ body {
 
         //event handler for user input
         window.addEventListener("keydown",function(event){
-            if(gameState)
+            if(!gameState)
                 return;
 
             if(event.key === ' '){
@@ -491,17 +514,41 @@ body {
             }
         }
  
-        function alien_bullet_collision(){
-            aliens = aliens.filter(function(alienObj){
-                for(let i = 0;i < bullet_count; i++){
-                    if(collision(alienObj,"alien",bullets[i],"bullet")){
-                        return false;
-                    }
+    function alien_bullet_collision(){
+        // Track bullets that hit aliens so we can remove them
+        const bulletsToRemove = [];
+        
+        aliens = aliens.filter(function(alienObj, alienIndex){
+            for(let i = 0; i < bullet_count; i++){
+                // Skip bullets that are already marked for removal
+                if(bulletsToRemove.includes(i)) continue;
+                
+                if(collision(alienObj,"alien",bullets[i],"bullet")){
+                    // Mark this bullet for removal
+                    bulletsToRemove.push(i);
+                    
+                    // Increment score and update display
+                    score += 10;
+                    document.getElementById("score").textContent = `Score: ${score}`;
+                    
+
+                    return false;
                 }
-                return true;
-            });
-            alien_count = aliens.length;
+            }
+
+            return true;
+        });
+        
+        // Remove bullets that hit aliens
+        bulletsToRemove.sort((a, b) => b - a);
+        for(let bulletIndex of bulletsToRemove){
+            bullets.splice(bulletIndex, 1);
+            bullet_count--;
         }
+        
+
+        alien_count = aliens.length;
+    }
 
         //spawn fresh fleet when all aliens defeated
         //increase game diffcult every time when new spawn 
@@ -515,6 +562,10 @@ body {
             aliens.push({x : intialAlienX, y : alienY});
             aliens.push({x : intialAlienX2, y: alienY});
             alien_count = 2;
+
+            //update current wave
+            wave++;
+            document.getElementById("wave").textContent = `Wave: ${wave}`;
 
             incGameDifficulty();
         }
@@ -565,18 +616,19 @@ body {
         
         //when alien reaches the bottom or hits the ship
         function gameover(){
-            if(alien_count === 0)
-                return false;
+
             // Check each alien to see if it causes a game over condition
             for(let i = 0;i < alien_count; i++){
                 const alienObj = aliens[i];
    
                 const hasReachedBottom = (alienObj.y + alienRectY + alienRectHeight) >= alienBottomMax;
-
-                if (hasReachedBottom || collision({x : shipX, y : shipY}, "ship", alienObj, "alien")) {
+                const hitShip = collision({x : shipX, y : shipY}, "ship", alienObj, "alien");
+                
+                if (hasReachedBottom || hitShip) {
                     return true; 
                 }
             }
+            
             return false; 
         }       
 
@@ -588,19 +640,30 @@ body {
         bullets.splice(0,bullets.length);
         alien_count = 0;
         bullet_count = 0;
+        lastTime = 0;  //veryyy nasty bug without  this
         gameState = false;
-        triggerHit = false;
+
+        score = 0;
+        wave = 1;
+        document.getElementById("score").textContent = `Score: ${score}`;
+        document.getElementById("wave").textContent = `Wave: ${wave}`;
     }
 
 
         //yeah this the main function!!!
         let lastTime = 0; 
-        function gameLoop(timeStamp){
-                        
-            window.requestAnimationFrame(gameLoop);
 
-            if(gameState)
+        function gameLoop(timeStamp){
+
+            window.requestAnimationFrame(gameLoop);   
+            
+            if(!gameState)
                 return; 
+
+            if(lastTime === 0) {  //absolute headache without this nasty bug 
+                lastTime = timeStamp;
+                return;
+            }
 
             const deltaTime = (timeStamp - lastTime) / 1000;
             lastTime = timeStamp; //this will be used for next frame
@@ -613,8 +676,17 @@ body {
             
             //check if gameover 
             if(gameover()){
+
+                if(score > highscore) {
+                    highscore = score;
+                    localStorage.setItem('spacewars-highscore', highscore);
+                    document.getElementById("highscore").textContent = `Highscore: ${highscore}`;
+                }
                 reset();
                 console.log("gameover D:");
+                 
+                document.getElementById("message").textContent = "Game Over! Press R to restart";
+                document.getElementById("message").style.display = "block";
                 return;
             }
 
