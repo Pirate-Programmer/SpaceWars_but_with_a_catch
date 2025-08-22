@@ -17,6 +17,10 @@ cd SpaceWars_but_with_a_catch
 ```python
 python -m http.server
 ```
-Open Browser -> [http]://[localhost]:[8000]/index.html
+visit link given by python http server
+
+
+Enjoy Shooting!!
+
 
 
