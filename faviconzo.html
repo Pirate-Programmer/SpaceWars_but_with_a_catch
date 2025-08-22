@@ -86,7 +86,9 @@
         canvas.height = favicon_height;
         const ctx = canvas.getContext("2d")
         ctx.imageSmoothingEnabled = false;
-        //canvas.style.display = "none";
+        
+        //THIS HIDES THE CANVAS FROM DISPLAYING ON THE SCREEN
+        canvas.style.display = "none";
 
         //game setting
 
@@ -123,7 +125,7 @@
         const alienRectHeight = 3;
 
         let alienSpeedX = 4;
-        let alienSpeedY = 8;
+        let alienSpeedY = 1;
         let direction = 1;
 
         let alien_count = 0;
@@ -150,17 +152,16 @@
         const positionsY = [-6,-5,-4,-3,-2,-1,0,1,2];
         
 
+        function incGameDifficulty(){
+            alienSpeedX *= 1.1;
+            alienSpeedY *= 1.1;
+        }
+
         
         function getRandomInt(max){
             return Math.floor(Math.random() * max);
         }
 
-        //returns array contains x,y and width,height of sprite
-        function getRect(str){
-            if(str === "ship"){
-
-            }
-        }
 
         function intialState(){
             //draw gameboard onto the canvas
@@ -270,14 +271,15 @@
         //Update canvas
         function updateGame(deltaTime){
             //spawn new alien_fleet no aliens remaining
-            
+            spawn_alien_fleet();
+
             //check for bullet alien collision
+            alien_bullet_collision();
 
             //update positions
             updateShip(deltaTime);
             updateAlien(deltaTime);
             updateBullets(deltaTime);
-            
         }
 
         //move ship left or right
@@ -323,7 +325,7 @@
             //update Y coords of aliens when boundary is hit
             if(flag){
                 for(let i = 0;i < alien_count; i++)
-                    aliens[i].y += 1;
+                    aliens[i].y += alienSpeedY;
             }
         }
 
@@ -344,7 +346,37 @@
                 }
             }
         }
+ 
+        function alien_bullet_collision(){
+            aliens = aliens.filter(function(alienObj){
+                for(let i = 0;i < bullet_count; i++){
+                    if(collision(alienObj,"alien",bullets[i],"bullet")){
+                        return false;
+                    }
+                }
+                return true;
+            });
+            alien_count = aliens.length;
+        }
 
+        //spawn fresh fleet when all aliens defeated
+        //increase game diffcult every time when new spawn 
+        function spawn_alien_fleet(){
+            if(alien_count !== 0)
+                return;
+
+            const intialAlienX = positionsX[getRandomInt(positionsX.length - 8)];
+            const intialAlienX2 = intialAlienX + 8;
+            
+            aliens.push({x : intialAlienX, y : alienY});
+            aliens.push({x : intialAlienX2, y: alienY});
+            alien_count = 2;
+
+            incGameDifficulty();
+        }
+
+
+        //fetch the actual coords of the objects 
         function getHitbox(obj, type) {
             let offsetX, offsetY, width, height;
 
@@ -376,6 +408,7 @@
             };
         }
 
+        //check collision between two objects
         function collision(obj1,type1,obj2,type2){
             const rect1 = getHitbox(obj1,type1);
             const rect2 = getHitbox(obj2,type2);
@@ -419,8 +452,11 @@
             //check if gameover 
             if(gameover()){
                 alien_count = 0;
+                bullet_count = 0;
+
                 //reset();
                 console.log("gameover D:");
+                return;
             }
             
             window.requestAnimationFrame(gameLoop);
