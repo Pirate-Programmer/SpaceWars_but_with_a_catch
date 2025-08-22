@@ -19,7 +19,8 @@ python -m http.server
 visit link given by python http server
 
 
-Enjoy Shooting!!
+#Enjoy Shooting!!
+
 
 
 
