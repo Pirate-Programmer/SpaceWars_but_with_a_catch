@@ -1,4 +1,5 @@
 # SpaceWars but with a Catch 
+where dundidlythegame at ?
 
 A fun browser-based space game with a twist. Play directly online or run it locally.  
 
@@ -16,5 +17,6 @@ cd SpaceWars_but_with_a_catch
 ```python
 python -m http.server
 ```
-Open Browser -> http://localhost:8000/index.html
+Open Browser -> [http]://[localhost]:[8000]/index.html
+
 
