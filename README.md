@@ -5,8 +5,9 @@ A fun browser-based space game with a twist. Play directly online or run it loca
 
 ## Play Online  
 👉 [Play here](https://pirate-programmer.github.io/SpaceWars_but_with_a_catch/)  
+PS: this is for desktops and alike, phone users not your day D: <br>
 (make sure to open on a browser) <br>
-PS: this is for desktops and alike phone users not your day D: 
+
 
 ## Installation and Run Locally 
 Clone the repository:  
@@ -19,6 +20,7 @@ visit link given by python http server
 
 
 Enjoy Shooting!!
+
 
 
 
