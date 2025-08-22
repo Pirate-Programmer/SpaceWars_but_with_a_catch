@@ -5,50 +5,188 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" id="favicon" href="images/0.ico">
     <title>SpaceWars</title>
+
     <style>
-        /* body{
-            background-color: black;
-            color:white;
-        } */
+body {
+    margin: 0;
+    padding: 0;
+    background: black;
+    color: white;
+    font-family: monospace, sans-serif;
+    overflow: hidden;
+}
+
+/* Start message in center */
+#message {
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 10px;
+    font-weight: bold;
+    animation: pulse 1.5s infinite;
+    text-align: center;
+}
+
+/* Score + wave (top left) */
+#scoreboard {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+#hud {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    font-size: 10px;
+    line-height: 1.6;
+    display: none;
+    flex-direction: column;
+}
+
+#highscore {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    font-size: 10px;
+    display: none;
+}
+
+#controls {
+    position: fixed;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 10px;
+    line-height: 1.6;
+    opacity: 0.7;
+    text-align: center;
+    display: none;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Heartbeat/pulse for start text */
+@keyframes pulse {
+    0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    50%  { opacity: 0.4; transform: translate(-50%, -50%) scale(1.1); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+    @media screen and (max-width: 600px) {
+        #message {
+            font-size: 8px;
+        }
+        
+        #hud {
+            font-size: 9px;
+        }
+        
+        #highscore {
+            font-size: 9px;
+        }
+        
+        #controls {
+            font-size: 8px;
+            top: 65%;  /* Move controls down a bit more */
+        }
+    }
+
+    @media screen and (max-width: 400px) {
+        #message {
+            font-size: 7px;
+        }
+        
+        #hud, #highscore {
+            font-size: 8px;
+        }
+        
+        #controls {
+            font-size: 7px;
+            top: 70%;
+        }
+    }
     </style>
+
     <script>
-        let triggerHit = false;
+        let gameState = false;
         //get the favicon element
         const favicon = document.getElementById("favicon");   
         const favicon_height = 16;
         const favicon_width = 16; 
 
-        //function to start timer before gameplay
-        //default param starts timer from 1
-        //setTimeout(fn,delay): recursion the function is called at a delay of 1 seconds
-        // const countdown = function(curr = 1){   
-        //     if(curr > 5)
-        //     {
-        //         //set favicon to gameboard
-        //         //favicon.href = "images/6.ico";
-        //         intialState();
-        //         return;
-        //     }
-        //     favicon.href = `images/${curr}.ico`;
-        //     setTimeout(() => countdown(curr + 1), 1000);
-        // };
 
-        // //trigger countdown on hitting 'spacebar'
-        // window.addEventListener('keydown',function(event){
-        //     if(event.key === ' ' && !triggerHit)
-        //     {
-        //         triggerHit = true;
-        //         countdown();
-        //     }
-        // });
-        
     </script>
     
 </head>
 <body>
-    <!-- <h4 id="trigger">PRESS Spacebar!!!</h4> -->
-    <!-- <button  id="countdown" title="start the dam countdown bruh...">Start countdown</button> -->
     <canvas id="canvas">yo</canvas>
+    
+    <div id="message">Press SPACE to Begin</div>
+    
+    <div id="hud">
+        <div id="score">Score: 0</div>
+        <div id="wave">Wave: 1</div>
+    </div>
+
+    <div id="highscore">
+        Highscore: 0
+    </div>
+
+    <div id="controls">
+        Controls:<br>
+        ← → to move<br>
+        SPACE to shoot
+    </div>
+
+
+    <script>
+        let triggerHit = false;
+        const startMessage = document.getElementById("message");
+        const hud = document.getElementById("hud");
+        
+
+
+        //function to start timer before gameplay
+        //default param starts timer from 1
+        //setTimeout(fn,delay): recursion the function is called at a delay of 1 seconds
+        const countdown = function(curr = 1){   
+            if(curr > 3)
+            {
+                favicon.href = `images/go.ico`;                
+                setTimeout(() => {
+                    intialState(); 
+                    gameState = true;          
+                }, 1000); 
+                return;
+            }
+
+            favicon.href = `images/${curr}.ico`;
+            setTimeout(() => countdown(curr + 1), 1000);
+        };
+
+    window.addEventListener("keydown", function (event) {
+        if (event.key === " " && !triggerHit) {
+            triggerHit = true;
+            startMessage.style.display = "none";
+            
+            // Show all elements immediately
+            hud.style.display = "block";
+            document.getElementById("highscore").style.display = "block";
+            document.getElementById("controls").style.display = "block";
+            
+            countdown();
+        }
+    });
+    </script>
+
+
+    <!-- Game Script -->
     <script>
         
          
@@ -126,8 +264,11 @@
 
         let alienSpeedX = 4;
         let alienSpeedY = 1;
+        const alienIntialSpeedX = alienSpeedX;
+        const alienIntialSpeedY = alienSpeedY;
         let direction = 1;
-
+        
+        
         let alien_count = 0;
         const max_alien_count = 2;
         let aliens = [];
@@ -172,6 +313,8 @@
                 loadImages(bullet,"./images/bullet.png")
             ]).then(() => {
                 //clear the canvas
+                reset();
+
                 ctx.clearRect(0,0,canvas.width,canvas.height);
                 
                 //draw gameboard and ship 
@@ -198,17 +341,19 @@
                 console.log("Intial State Rendered!!");
 
                 //intiate gameloop
-                window.requestAnimationFrame(gameLoop);        
+                window.requestAnimationFrame(gameLoop);   
             });
         }
 
         //user input vars
-        let spacebar = false;
         let left_arrow = false;
         let right_arrow = false;
 
         //event handler for user input
         window.addEventListener("keydown",function(event){
+            if(gameState)
+                return;
+
             if(event.key === ' '){
                 shootbullets();
             }     
@@ -219,8 +364,7 @@
         });
 
          window.addEventListener("keyup",function(event){
-            // if(event.key === ' ')
-            //     spacebar = false;
+
             if(event.key === 'ArrowRight')
                 right_arrow = false;
             if(event.key === 'ArrowLeft')
@@ -421,6 +565,8 @@
         
         //when alien reaches the bottom or hits the ship
         function gameover(){
+            if(alien_count === 0)
+                return false;
             // Check each alien to see if it causes a game over condition
             for(let i = 0;i < alien_count; i++){
                 const alienObj = aliens[i];
@@ -434,12 +580,28 @@
             return false; 
         }       
 
-
+    //reset everything to default state
+    function reset(){
+        alienSpeedX = alienIntialSpeedX;
+        alienSpeedY = alienIntialSpeedY;
+        aliens.splice(0,aliens.length);
+        bullets.splice(0,bullets.length);
+        alien_count = 0;
+        bullet_count = 0;
+        gameState = false;
+        triggerHit = false;
+    }
 
 
         //yeah this the main function!!!
         let lastTime = 0; 
         function gameLoop(timeStamp){
+                        
+            window.requestAnimationFrame(gameLoop);
+
+            if(gameState)
+                return; 
+
             const deltaTime = (timeStamp - lastTime) / 1000;
             lastTime = timeStamp; //this will be used for next frame
 
@@ -451,20 +613,14 @@
             
             //check if gameover 
             if(gameover()){
-                alien_count = 0;
-                bullet_count = 0;
-
-                //reset();
+                reset();
                 console.log("gameover D:");
                 return;
             }
-            
-            window.requestAnimationFrame(gameLoop);
+
         }
 
-        intialState();
-        
-
+        //intialState();
     </script>
 </body> 
 </html>
